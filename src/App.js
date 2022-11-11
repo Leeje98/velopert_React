@@ -1,24 +1,41 @@
-import logo from './logo.svg';
+import { useRef } from 'react';
 import './App.css';
+import Counter from './Counter';
+import Hello from './Hello';
+import InputSample from './InputSample';
+import UserList from './UserList';
+import Wrapper from './Wrapper';
+
 
 function App() {
+  const users = [
+    {
+      id: 1,
+      username: "velopert",
+      email: "public.velopert@gmail.com",
+    },
+    {
+      id: 2,
+      username: "tester",
+      email: "tester@example.com",
+    },
+    {
+      id: 3,
+      username: "liz",
+      email: "liz@example.com",
+    },
+  ];
+
+  const nextId = useRef(4);
+  const onChange= () => {
+
+
+    nextId.current += 1;
+  } 
+
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <UserList users={users} />
   );
 }
 
