@@ -23,13 +23,11 @@ function App() {
   const onChange = useCallback(
     (e) => {
       const { name, value } = e.target;
-      setInputs({
+      setInputs(inputs => ({
         ...inputs,
         [name]: value,
-      });
-    },
-    [inputs]
-  );
+      }));
+    }, []);
 
   const [users, setUsers] = useState([
     {
@@ -60,33 +58,29 @@ function App() {
       email,
     };
     // setUsers([...users, user]) // 1. 스프레드 연산자(배열 복사)를 이용하여 배열 추가
-    setUsers(users.concat(user)); // 2. concat을 이용하여 기존의 배열을 수정하지 않고, 새로운 원소가 추가된 새로운 배열을 만듦
+    setUsers(users => users.concat(user)); // 2. concat을 이용하여 기존의 배열을 수정하지 않고, 새로운 원소가 추가된 새로운 배열을 만듦
 
     setInputs({
       username: "",
       email: "",
     });
     nextId.current += 1;
-  }, [users, username, email]);
+  }, [username, email]);
 
   const onRemove = useCallback(
     (id) => {
       // user.id 가 파라미터로 일치하지 않는 원소만 추출해서 새로운 배열을 만듬
       // = user.id 가 id 인 것을 제거함
-      setUsers(users.filter((user) => user.id !== id));
-    },
-    [users]
-  );
+      setUsers(users => users.filter((user) => user.id !== id));
+    }, []);
   const onToggle = useCallback(
     (id) => {
-      setUsers(
+      setUsers(users =>
         users.map((user) =>
           user.id === id ? { ...user, active: !user.active } : user
         )
       );
-    },
-    [users]
-  );
+    }, []);
 
   // const count = countActiveUsers(users)
   const count = useMemo(() => countActiveUsers(users), [users]);
