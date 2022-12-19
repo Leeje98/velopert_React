@@ -6,6 +6,7 @@ import "./App.css";
 import UserList from "./UserList";
 // import Wrapper from "./Wrapper";
 import CreateUser from "./CreateUser";
+import useInputs from "./Hooks/useInputs";
 
 function countActiveUsers(users) {
   console.log("활성 사용자 수를 세는 중...");
@@ -74,24 +75,28 @@ function reducer(state, action) {
 }
 
 function App() {
+  const [{ username, email }, onChange, reset] = useInputs({
+    username: '',
+    email: ''
+  })
   const [state, dispatch] = useReducer(reducer, initialState); // useReducer 에 넣는 첫번째 파라미터는 reducer 함수이고, 두번째 파라미터는 초기 상태
   const nextId = useRef(4);
 
   const { users } = state;
-  const { username, email } = state.inputs;
+  // const { username, email } = state.inputs;
 
   // useCallback :
   // 첫번째 인자로 넘어온 함수를, 두번째 인자로 넘어온 배열 내의 값이 변경될 때까지 저장해놓고 재사용할 수 있게 해준다
   // 배열에 요소들이 없을 시(빈배열) 처음 기억해둔 함수를 끝까지 쓴다
 
-  const onChange = useCallback((e) => {
-    const { name, value } = e.target;
-    dispatch({
-      type: "CHANGE_INPUT",
-      name, // 구조분해할당
-      value,
-    });
-  }, []);
+  // const onChange = useCallback((e) => {
+  //   const { name, value } = e.target;
+  //   dispatch({
+  //     type: "CHANGE_INPUT",
+  //     name, // 구조분해할당
+  //     value,
+  //   });
+  // }, []);
 
   const onCreate = useCallback(() => {
     dispatch({
