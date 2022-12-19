@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useReducer, useRef, useState } from "react";
 import "./App.css";
 // import Counter from "./Counter";
 // import Hello from "./Hello";
@@ -12,24 +12,13 @@ function countActiveUsers(users) {
   return users.filter((user) => user.active).length;
 }
 
-function App() {
-  const [inputs, setInputs] = useState({
+const initialState = {
+  // App 에서 사용 할 초기 상태를 컴포넌트 바깥으로 분리
+  inputs: {
     username: "",
     email: "",
-  });
-
-  const { username, email } = inputs;
-
-  const onChange = useCallback(
-    (e) => {
-      const { name, value } = e.target;
-      setInputs(inputs => ({
-        ...inputs,
-        [name]: value,
-      }));
-    }, []);
-
-  const [users, setUsers] = useState([
+  },
+  users: [
     {
       id: 1,
       username: "velopert",
@@ -48,47 +37,89 @@ function App() {
       email: "liz@example.com",
       active: false,
     },
-  ]);
+  ],
+};
 
+// reducer 에서 반환하는 상태는 곧 컴포넌트가 지닐 새로운 상태가 된다
+function reducer(state, action) {
+  switch (action.type) {
+    case "CHANGE_INPUT": // input창 입력시 value값 바뀌는 것 인지
+      return {
+        ...state,
+        inputs: {
+          ...state.inputs,
+          [action.name]: action.value,
+        },
+      };
+    case "CREATE_USER": // 새로운 항목 생성
+      return {
+        inputs: initialState.inputs,
+        users: state.users.concat(action.user),
+      };
+    case "TOGGLE_USER": // active 상태 관리
+      return {
+        ...state,
+        users: state.users.map(user =>
+          user.id === action.id ? { ...user, active: !user.active } : user
+        ),
+      };
+    case "REMOVE_USER":  // 항목 지우기
+      return {
+        ...state,
+        users: state.users.filter((user) => user.id !== action.id),
+      };
+    default:
+      return state;
+  }
+}
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState); // useReducer 에 넣는 첫번째 파라미터는 reducer 함수이고, 두번째 파라미터는 초기 상태
   const nextId = useRef(4);
-  const onCreate = useCallback(() => {
-    const user = {
-      id: nextId.current,
-      username,
-      email,
-    };
-    // setUsers([...users, user]) // 1. 스프레드 연산자(배열 복사)를 이용하여 배열 추가
-    setUsers(users => users.concat(user)); // 2. concat을 이용하여 기존의 배열을 수정하지 않고, 새로운 원소가 추가된 새로운 배열을 만듦
 
-    setInputs({
-      username: "",
-      email: "",
+  const { users } = state;
+  const { username, email } = state.inputs;
+
+  // useCallback :
+  // 첫번째 인자로 넘어온 함수를, 두번째 인자로 넘어온 배열 내의 값이 변경될 때까지 저장해놓고 재사용할 수 있게 해준다
+  // 배열에 요소들이 없을 시(빈배열) 처음 기억해둔 함수를 끝까지 쓴다
+
+  const onChange = useCallback((e) => {
+    const { name, value } = e.target;
+    dispatch({
+      type: "CHANGE_INPUT",
+      name, // 구조분해할당
+      value,
+    });
+  }, []);
+
+  const onCreate = useCallback(() => {
+    dispatch({
+      type: "CREATE_USER",
+      user: {
+        id: nextId.current,
+        username,
+        email,
+      },
     });
     nextId.current += 1;
   }, [username, email]);
 
-  const onRemove = useCallback(
-    (id) => {
-      // user.id 가 파라미터로 일치하지 않는 원소만 추출해서 새로운 배열을 만듬
-      // = user.id 가 id 인 것을 제거함
-      setUsers(users => users.filter((user) => user.id !== id));
-    }, []);
-  const onToggle = useCallback(
-    (id) => {
-      setUsers(users =>
-        users.map((user) =>
-          user.id === id ? { ...user, active: !user.active } : user
-        )
-      );
-    }, []);
+  const onToggle = useCallback((id) => {
+    dispatch({
+      type: "TOGGLE_USER",
+      id,
+    });
+  }, []);
 
-  // const count = countActiveUsers(users)
+  const onRemove = useCallback((id) => {
+    dispatch({
+      type: "REMOVE_USER",
+      id,
+    });
+  }, []);
+
   const count = useMemo(() => countActiveUsers(users), [users]);
-  // useMemo : 성능최적화를 위해 사용
-  // 첫번째 인수에는 함수, 두번째 인수에는 배열을 넣어주면 된다.
-  // 두번째 인수에 넣어준 배열의 값이 바뀔때만 함수가 실행된다.
-  // 그렇지 않다면 이전의 값을 재사용한다.
-  // users의 값이 바뀔때만 호출하고 싶은데 input에 값을 입력할때에도 불필요하게 호출 되어서 사용한다
   return (
     <>
       <CreateUser
@@ -97,8 +128,8 @@ function App() {
         onChange={onChange}
         onCreate={onCreate}
       />
-      <UserList users={users} onRemove={onRemove} onToggle={onToggle} />
-      <div>활성사용자 수: {count}</div>
+      <UserList users={users} onToggle={onToggle} onRemove={onRemove} />
+      <div>활성사용자 수 : {count}</div>
     </>
   );
 }
