@@ -13,68 +13,81 @@ import UserList from "./UserList";
 // import Wrapper from "./Wrapper";
 import CreateUser from "./CreateUser";
 import useInputs from "./Hooks/useInputs";
+import produce from "immer"; // 불변성에 대해서 신경쓰지 않고 그냥 업데이트 해주면 다 알아서 해주는 라이브러리
 
 function countActiveUsers(users) {
-  console.log("활성 사용자 수를 세는 중...");
-  return users.filter((user) => user.active).length;
+  console.log('활성 사용자 수를 세는중...');
+  return users.filter(user => user.active).length;
 }
 
 const initialState = {
   // App 에서 사용 할 초기 상태를 컴포넌트 바깥으로 분리
-  inputs: {
-    username: "",
-    email: "",
-  },
+  // inputs: {
+  //   username: "",
+  //   email: "",
+  // },
   users: [
     {
       id: 1,
-      username: "velopert",
-      email: "public.velopert@gmail.com",
-      active: true,
+      username: 'velopert',
+      email: 'public.velopert@gmail.com',
+      active: true
     },
     {
       id: 2,
-      username: "tester",
-      email: "tester@example.com",
-      active: false,
+      username: 'tester',
+      email: 'tester@example.com',
+      active: false
     },
     {
       id: 3,
-      username: "liz",
-      email: "liz@example.com",
-      active: false,
-    },
+      username: 'liz',
+      email: 'liz@example.com',
+      active: false
+    }
   ],
 };
 
 // reducer 에서 반환하는 상태는 곧 컴포넌트가 지닐 새로운 상태가 된다
 function reducer(state, action) {
   switch (action.type) {
-    case "CHANGE_INPUT": // input창 입력시 value값 바뀌는 것 인지
-      return {
-        ...state,
-        inputs: {
-          ...state.inputs,
-          [action.name]: action.value,
-        },
-      };
+    // case "CHANGE_INPUT": // input창 입력시 value값 바뀌는 것 인지
+    //   return {
+    //     ...state,
+    //     inputs: {
+    //       ...state.inputs,
+    //       [action.name]: action.value,
+    //     },
+    //   };
     case "CREATE_USER": // 새로운 항목 생성
-      return {
-        inputs: initialState.inputs,
-        users: state.users.concat(action.user),
-      };
+      // return {
+      //   inputs: initialState.inputs,
+      //   users: state.users.concat(action.user),
+      // };
+      return produce(state, draft => {
+        // 첫번째 파라미터에는 수정하고 싶은 상태, 두번째 파라미터에는 어떻게 업데이트하고 싶을지 정의하는 함수
+        draft.users.push(action.user);
+      });
     case "TOGGLE_USER": // active 상태 관리
-      return {
-        ...state,
-        users: state.users.map((user) =>
-          user.id === action.id ? { ...user, active: !user.active } : user
-        ),
-      };
+      // return {
+      //   ...state,
+      //   users: state.users.map((user) =>
+      //     user.id === action.id ? { ...user, active: !user.active } : user
+      //   ),
+      // };
+      return produce(state, (draft) => {
+        const user = draft.users.find((user) => user.id === action.id);
+        user.active = !user.active;
+      });
     case "REMOVE_USER": // 항목 지우기
-      return {
-        ...state,
-        users: state.users.filter((user) => user.id !== action.id),
-      };
+      // return {
+      //   ...state,
+      //   users: state.users.filter((user) => user.id !== action.id),
+      // };
+      return produce(state, (draft) => {
+        const index = draft.users.findIndex((user) => user.id === action.id);
+        draft.users.splice(index, 1);
+      });
     default:
       return state;
   }
@@ -85,12 +98,12 @@ export const UserDispatch = React.createContext(null);
 // UserDispatch 라는 Context 를 만들어서, 어디서든지 dispatch 를 꺼내 쓸 수 있도록 준비를 해준 것
 
 function App() {
-  const [{ username, email }, onChange, onReset] = useInputs({
-    username: "",
-    email: "",
-  });
+  // const [{ username, email }, onChange, onReset] = useInputs({
+  //   username: "",
+  //   email: "",
+  // });
   const [state, dispatch] = useReducer(reducer, initialState); // useReducer 에 넣는 첫번째 파라미터는 reducer 함수이고, 두번째 파라미터는 초기 상태
-  const nextId = useRef(4);
+  // const nextId = useRef(4);
 
   const { users } = state;
   // const { username, email } = state.inputs;
@@ -108,18 +121,18 @@ function App() {
   //   });
   // }, []);
 
-  const onCreate = useCallback(() => {
-    dispatch({
-      type: "CREATE_USER",
-      user: {
-        id: nextId.current,
-        username,
-        email,
-      },
-    });
-    onReset();
-    nextId.current += 1;
-  }, [username, email, onReset]);
+  // const onCreate = useCallback(() => {
+  //   dispatch({
+  //     type: "CREATE_USER",
+  //     user: {
+  //       id: nextId.current,
+  //       username,
+  //       email,
+  //     },
+  //   });
+  //   onReset();
+  //   nextId.current += 1;
+  // }, [username, email, onReset]);
 
   // const onToggle = useCallback((id) => {
   //   dispatch({
@@ -138,14 +151,9 @@ function App() {
   const count = useMemo(() => countActiveUsers(users), [users]);
   return (
     <>
-      <UserDispatch.Provider value={dispatch}>  
-      {/* React.createContext로 전역적으로 사용할 수 있는 값을 관리 */}
-        <CreateUser
-          username={username}
-          email={email}
-          onChange={onChange}
-          onCreate={onCreate}
-        />
+      <UserDispatch.Provider value={dispatch}>
+        {/* React.createContext로 전역적으로 사용할 수 있는 값을 관리 */}
+        <CreateUser />
         {/* <UserList users={users} onToggle={onToggle} onRemove={onRemove} /> */}
         <UserList users={users} />
         <div>활성사용자 수 : {count}</div>
