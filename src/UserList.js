@@ -1,9 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
+import { UserDispatch } from "./App";
 
-const User = React.memo(function User({ user, onRemove, onToggle }) {
-  useEffect(() => {
-    console.log(user);
-  });
+// const User = React.memo(function User({ user, onRemove, onToggle }) {
+const User = React.memo(function User({ user }) {
+  // useEffect(() => {
+  //   console.log(user);
+  // });
+  const dispatch = useContext(UserDispatch);
 
   return (
     <div>
@@ -12,17 +15,23 @@ const User = React.memo(function User({ user, onRemove, onToggle }) {
           cursor: "pointer",
           color: user.active ? "green" : "black",
         }}
-        onClick={() => onToggle(user.id)}
+        onClick={() => {
+          dispatch({ type: 'TOGGLE_USER', id: user.id });  // Context API 를 사용해서 dispatch 를 어디서든지 조회해서 사용해줄 수 있다
+        }}
       >
         {user.username}
       </b>
+      &nbsp;
       <span>({user.email})</span>&nbsp;&nbsp;
-      <button onClick={() => onRemove(user.id)}>삭제</button>
+      <button onClick={() => {
+        dispatch({ type: 'REMOVE_USER', id: user.id })
+      }}>삭제</button>
     </div>
   );
 })
 
-function UserList({ users, onRemove, onToggle }) {
+// function UserList({ users, onRemove, onToggle }) {
+function UserList({ users }) {
   return (
     <div>
       {users.map((user) => (
@@ -33,8 +42,8 @@ function UserList({ users, onRemove, onToggle }) {
         <User
           user={user}
           key={user.id}
-          onRemove={onRemove}
-          onToggle={onToggle}
+          // onRemove={onRemove}
+          // onToggle={onToggle}
         />
       ))}
     </div>

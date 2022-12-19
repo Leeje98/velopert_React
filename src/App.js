@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useReducer, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import "./App.css";
 // import Counter from "./Counter";
 // import Hello from "./Hello";
@@ -60,11 +66,11 @@ function reducer(state, action) {
     case "TOGGLE_USER": // active 상태 관리
       return {
         ...state,
-        users: state.users.map(user =>
+        users: state.users.map((user) =>
           user.id === action.id ? { ...user, active: !user.active } : user
         ),
       };
-    case "REMOVE_USER":  // 항목 지우기
+    case "REMOVE_USER": // 항목 지우기
       return {
         ...state,
         users: state.users.filter((user) => user.id !== action.id),
@@ -74,11 +80,15 @@ function reducer(state, action) {
   }
 }
 
+export const UserDispatch = React.createContext(null);
+// UserDispatch 라는 이름으로 내보낸다
+// UserDispatch 라는 Context 를 만들어서, 어디서든지 dispatch 를 꺼내 쓸 수 있도록 준비를 해준 것
+
 function App() {
-  const [{ username, email }, onChange, reset] = useInputs({
-    username: '',
-    email: ''
-  })
+  const [{ username, email }, onChange, onReset] = useInputs({
+    username: "",
+    email: "",
+  });
   const [state, dispatch] = useReducer(reducer, initialState); // useReducer 에 넣는 첫번째 파라미터는 reducer 함수이고, 두번째 파라미터는 초기 상태
   const nextId = useRef(4);
 
@@ -107,34 +117,39 @@ function App() {
         email,
       },
     });
+    onReset();
     nextId.current += 1;
-  }, [username, email]);
+  }, [username, email, onReset]);
 
-  const onToggle = useCallback((id) => {
-    dispatch({
-      type: "TOGGLE_USER",
-      id,
-    });
-  }, []);
+  // const onToggle = useCallback((id) => {
+  //   dispatch({
+  //     type: "TOGGLE_USER",
+  //     id,
+  //   });
+  // }, []);
 
-  const onRemove = useCallback((id) => {
-    dispatch({
-      type: "REMOVE_USER",
-      id,
-    });
-  }, []);
+  // const onRemove = useCallback((id) => {
+  //   dispatch({
+  //     type: "REMOVE_USER",
+  //     id,
+  //   });
+  // }, []);
 
   const count = useMemo(() => countActiveUsers(users), [users]);
   return (
     <>
-      <CreateUser
-        username={username}
-        email={email}
-        onChange={onChange}
-        onCreate={onCreate}
-      />
-      <UserList users={users} onToggle={onToggle} onRemove={onRemove} />
-      <div>활성사용자 수 : {count}</div>
+      <UserDispatch.Provider value={dispatch}>  
+      {/* React.createContext로 전역적으로 사용할 수 있는 값을 관리 */}
+        <CreateUser
+          username={username}
+          email={email}
+          onChange={onChange}
+          onCreate={onCreate}
+        />
+        {/* <UserList users={users} onToggle={onToggle} onRemove={onRemove} /> */}
+        <UserList users={users} />
+        <div>활성사용자 수 : {count}</div>
+      </UserDispatch.Provider>
     </>
   );
 }
